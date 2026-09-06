@@ -8,6 +8,11 @@ Game::Game()
 
 void Game::Reset()
 {
+	// Reset win/lose state
+	victory = false;
+	defeat = false;
+	ball.paused = false;
+
 	Console::SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	Console::CursorVisible(false);
 	paddle.width = 12;
@@ -94,35 +99,48 @@ void Game::Render() const
 	Console::Lock(false);
 }
 
-void Game::CheckCollision()
-{
-	// TODO #4 - Update collision to check all bricks
-	for (auto it = bricks.begin(); it != bricks.end(); ) {
-		if (it->Contains(ball.x_position + ball.x_velocity, ball.y_position + ball.y_velocity))
-		{
-			it->color = ConsoleColor(it->color - 1);
-			ball.y_velocity *= -1;
+void Game::CheckCollision() {
+	{
+		// TODO #4 - Update collision to check all bricks
+		for (auto it = bricks.begin(); it != bricks.end(); ) {
+			if (it->Contains(ball.x_position + ball.x_velocity, ball.y_position + ball.y_velocity))
+			{
+				it->color = ConsoleColor(it->color - 1);
+				ball.y_velocity *= -1;
 
-			// TODO #5 - If the ball hits the same brick 3 times (color == black), remove it from the vector
-			if (it->color == ConsoleColor::Black) {
-				it = bricks.erase(it); //remove brick
+				// TODO #5 - If the ball hits the same brick 3 times (color == black), remove it from the vector
+				if (it->color == ConsoleColor::Black) {
+					it = bricks.erase(it); //remove brick
+				}
+				else {
+					++it;
+				}
 			}
 			else {
 				++it;
 			}
 		}
-		else {
-			++it;
+
+		// TODO #6 - If no bricks remain, pause ball and display (render) victory text with R to reset
+		if (bricks.empty()) {
+			ball.paused = true;
+			victory = true; //set a flag so araender() can show "You win press R to reset"
 		}
+
+		//Paddle collision
+		if (paddle.Contains(ball.x_position + ball.x_velocity, ball.y_velocity + ball.y_position))
+		{
+			ball.y_velocity *= -1;
+		}
+
+		// TODO #7 - If ball touches bottom of window, pause ball and display (render) defeat text with R to reset
+		if (ball.y_position + ball.y_velocity >= WINDOW_HEIGHT) {
+			ball.paused = true;
+			defeat = true; // set a flag so Render() can show "You Lose! Press R to reset
+		}
+
 	}
-
-	// TODO #6 - If no bricks remain, pause ball and display (render) victory text with R to reset
-	
-
-	if (paddle.Contains(ball.x_position + ball.x_velocity, ball.y_velocity + ball.y_position))
-	{
-		ball.y_velocity *= -1;
-	}
-
-	// TODO #7 - If ball touches bottom of window, pause ball and display (render) defeat text with R to reset
 }
+
+
+
